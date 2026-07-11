@@ -14,7 +14,7 @@
 | `Setu_Demo_Page.html` | Interactive, clickable product demo — open it in a browser, no install needed |
 | `Setu_Stage1_Proposal.docx` | Written Stage 1 proposal (problem, solution, technical approach, data model) |
 | `Setu_Stage1_Deck.pptx` | Original 10-slide Stage 1 submission deck |
-| `Setu_Video_Script.md` | Timed 2-minute script for the Stage 1 walkthrough video |
+
 | `README.md` | This file |
 
 ---
