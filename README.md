@@ -92,13 +92,10 @@ All vendor names, scores, shipment IDs, and figures throughout the demo and deck
 
 ## Team
 
-**[Team Name]**
-- [Member 1 Name] — [IIT Name], [Branch], [Year]
-- [Member 2 Name] — [IIT Name], [Branch], [Year]
-- [Member 3 Name] — [IIT Name], [Branch], [Year]
-- [Member 4 Name] — [IIT Name], [Branch], [Year]
+**HUNTERZ**
+- Rajpriyan S - CEG, Guindy
 
-Contact: [team email]
+Contact: rajpriyanid@gmail.com
 
 ---
 
