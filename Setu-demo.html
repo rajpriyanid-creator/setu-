@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Setu — Live Product Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D141C; --panel:#141D28; --panel-alt:#1A2431; --border:#26333F;
+    --teal:#00D6B4; --teal-dim:#0B3D37; --amber:#FFB648; --amber-dim:#4A3512;
+    --red:#FF5D6C; --red-dim:#3D1A20; --text:#E9EEF2; --dim:#8B98A5; --faint:#4E5A66;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background-color:var(--bg); color:var(--text); font-family:'IBM Plex Sans',sans-serif;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 12% -8%, rgba(0,214,180,0.11), transparent 60%),
+      radial-gradient(ellipse 800px 550px at 102% 12%, rgba(255,182,72,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 50% 110%, rgba(0,214,180,0.05), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 32px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 32px);
+    background-attachment:fixed;
+    min-height:100vh;
+  }
+  .app{ display:flex; min-height:calc(100vh - 64px); }
+
+  /* ---------- Role bar ---------- */
+  .role-bar{ position:sticky; top:0; z-index:30; height:64px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 28px; background:var(--panel); border-bottom:1px solid var(--border); overflow:hidden; }
+  .role-bar::before{ content:""; position:absolute; top:0; left:0; right:0; height:4px;
+    background:repeating-linear-gradient(45deg, var(--amber) 0 14px, #1C1305 14px 28px); }
+  .crane-deco{ position:absolute; right:230px; top:-2px; width:150px; height:64px; opacity:.4; pointer-events:none; }
+  .role-bar-inner{ display:flex; gap:10px; z-index:2; }
+  .role-btn{ display:flex; align-items:center; gap:9px; padding:9px 18px; border-radius:9px; background:var(--panel-alt);
+    border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--dim); cursor:pointer; transition:all .15s ease; }
+  .role-btn:hover{ color:var(--text); }
+  .role-btn.active{ background:var(--teal-dim); border-color:var(--teal); color:var(--teal); }
+  .lang-switcher{ display:flex; align-items:center; gap:9px; z-index:2; }
+  .lang-lbl{ font-size:11px; color:var(--faint); font-family:'IBM Plex Mono',monospace; letter-spacing:.3px; }
+  .lang-switcher select{ padding:7px 10px; font-size:12.5px; }
+
+  /* ---------- AI suggest button ---------- */
+  .ai-btn{ display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg, var(--teal-dim), rgba(255,182,72,0.10));
+    border:1px solid var(--teal); color:var(--teal); padding:7px 15px; border-radius:20px; font-size:11.5px; font-weight:600;
+    cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:all .15s ease; }
+  .ai-btn:hover{ box-shadow:0 0 0 3px rgba(0,214,180,0.15); }
+  .ai-btn:disabled{ opacity:.65; cursor:wait; }
+  .ai-result{ margin-top:12px; padding:12px 15px; background:var(--panel-alt); border:1px solid var(--border);
+    border-left:3px solid var(--teal); border-radius:8px; font-size:12.5px; line-height:1.65; color:var(--text); }
+
+  /* ---------- Floating chat assistant ---------- */
+  .ai-chat-launcher{ position:fixed; bottom:26px; right:26px; width:56px; height:56px; border-radius:50%; background:var(--teal);
+    color:#06231F; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer;
+    box-shadow:0 6px 22px rgba(0,214,180,0.4); z-index:200; transition:transform .2s ease; }
+  .ai-chat-launcher:hover{ transform:scale(1.08); }
+  .ai-chat-panel{ position:fixed; bottom:96px; right:26px; width:350px; background:var(--panel); border:1px solid var(--border);
+    border-radius:14px; display:none; flex-direction:column; overflow:hidden; z-index:201; box-shadow:0 16px 50px rgba(0,0,0,0.45); }
+  .ai-chat-panel.open{ display:flex; }
+  .chat-panel-header{ display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    border-bottom:1px solid var(--border); background:var(--panel-alt); }
+  .chat-panel-body{ flex:1; overflow-y:auto; padding:14px; max-height:320px; min-height:160px; }
+  .chat-panel-input{ display:flex; border-top:1px solid var(--border); padding:10px; gap:8px; }
+  .chat-panel-input input{ flex:1; background:var(--panel-alt); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; color:var(--text); font-size:12.5px; font-family:'IBM Plex Sans',sans-serif; }
+  .chat-panel-input button{ background:var(--teal); border:none; color:#06231F; width:38px; border-radius:8px; cursor:pointer; font-size:14px;}
+
+  /* ---------- Supplier-side extras ---------- */
+  .upload-box{ border:2px dashed var(--border); border-radius:10px; padding:26px; text-align:center; color:var(--dim); font-size:12px; }
+  .upload-box i{ font-size:22px; color:var(--faint); display:block; margin-bottom:8px; }
+  .stage-track{ display:flex; gap:6px; margin:16px 0; }
+  .stage-track .stg{ flex:1; text-align:center; padding:10px 4px; border-radius:7px; background:var(--panel-alt); font-size:10.5px; color:var(--faint); border:1px solid var(--border); }
+  .stage-track .stg.done{ background:var(--teal-dim); color:var(--teal); border-color:var(--teal); }
+  .stage-track .stg.current{ background:var(--amber-dim); color:var(--amber); border-color:var(--amber); }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:250px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border);
+    padding:26px 18px; position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:6px; padding:0 6px;}
+  .brand-mark{ width:34px;height:34px;border-radius:8px; background:var(--teal); display:flex;align-items:center;justify-content:center; color:#06231F; font-size:16px;}
+  .brand-name{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:26px; letter-spacing:0.5px; line-height:1;}
+  .brand-tag{ font-size:10.5px; color:var(--dim); padding:0 6px 20px; letter-spacing:0.3px; border-bottom:1px solid var(--border); margin-bottom:18px;}
+  .nav-group-label{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--faint); padding:14px 10px 6px; text-transform:uppercase;}
+  .nav-item{
+    display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:8px; cursor:pointer;
+    color:var(--dim); font-size:13.5px; font-weight:500; transition:all .15s ease; margin-bottom:2px; position:relative;
+  }
+  .nav-item i{ width:16px; text-align:center; font-size:13px; }
+  .nav-item:hover{ background:var(--panel-alt); color:var(--text); }
+  .nav-item.active{ background:var(--teal-dim); color:var(--teal); }
+  .nav-item.active::before{ content:""; position:absolute; left:-18px; top:0; bottom:0; width:3px; background:var(--teal); border-radius:2px;}
+  .nav-badge{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:9.5px; background:var(--amber-dim); color:var(--amber); padding:1px 6px; border-radius:10px; }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; min-width:0; }
+  .topbar{
+    padding:26px 40px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:64px; background:rgba(13,20,28,0.85); backdrop-filter:blur(6px); z-index:5;
+  }
+  .topbar h1{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:28px; letter-spacing:0.3px; }
+  .topbar p{ color:var(--dim); font-size:13px; margin-top:2px; }
+  .live-pill{
+    display:flex; align-items:center; gap:7px; background:var(--panel-alt); border:1px solid var(--border);
+    padding:6px 12px; border-radius:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim);
+  }
+  .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--red); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(255,93,108,.5);} 50%{opacity:.5;} }
+
+  .view{ display:none; padding:32px 40px 60px; animation:fadein .35s ease; }
+  .view.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .grid{ display:grid; gap:18px; }
+  .grid-4{ grid-template-columns:repeat(4,1fr); }
+  .grid-2{ grid-template-columns:1.4fr 1fr; }
+  .grid-2-even{ grid-template-columns:1fr 1fr; }
+
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .card-title{ font-size:11px; font-family:'IBM Plex Mono',monospace; letter-spacing:1px; text-transform:uppercase; color:var(--faint); margin-bottom:14px; }
+
+  .stat-card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .stat-icon{ width:32px;height:32px;border-radius:8px; background:var(--teal-dim); color:var(--teal); display:flex;align-items:center;justify-content:center; font-size:13px; margin-bottom:14px;}
+  .stat-num{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:34px; line-height:1; }
+  .stat-label{ color:var(--dim); font-size:12px; margin-top:6px; }
+  .stat-num.amber{ color:var(--amber); } .stat-num.red{ color:var(--red); }
+
+  .badge{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; padding:3px 8px; border-radius:5px; font-weight:500; display:inline-flex; align-items:center; gap:5px;}
+  .badge.green{ background:var(--teal-dim); color:var(--teal); }
+  .badge.amber{ background:var(--amber-dim); color:var(--amber); }
+  .badge.red{ background:var(--red-dim); color:var(--red); }
+
+  .site-row{ display:flex; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .site-row:last-child{ border-bottom:none; }
+  .site-name{ width:150px; font-size:13px; font-weight:600; }
+  .risk-bar{ flex:1; height:8px; border-radius:4px; background:var(--panel-alt); overflow:hidden; }
+  .risk-bar > div{ height:100%; border-radius:4px; }
+  .site-meta{ width:150px; font-size:11px; color:var(--dim); text-align:right; font-family:'IBM Plex Mono',monospace; }
+
+  .feed{ list-style:none; max-height:330px; overflow-y:auto; }
+  .feed li{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px; animation:fadein .3s ease;}
+  .feed li:last-child{ border-bottom:none; }
+  .feed-dot{ width:7px;height:7px;border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .feed-time{ font-family:'IBM Plex Mono',monospace; color:var(--faint); font-size:10.5px; display:block; margin-top:2px;}
+
+  .graph-preview{ height:170px; position:relative; }
+  .graph-preview svg{ width:100%; height:100%; }
+  .graph-caption{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--faint); margin-top:8px; text-align:center;}
+
+  h2.section-h{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:24px; margin-bottom:4px; }
+  p.section-sub{ color:var(--dim); font-size:13.5px; margin-bottom:24px; max-width:640px; }
+
+  .gauge{ width:150px;height:150px;border-radius:50%; margin:0 auto; position:relative; }
+  .gauge::before{ content:""; position:absolute; inset:14px; border-radius:50%; background:var(--panel); }
+  .gauge-val{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .gauge-val b{ font-family:'Big Shoulders Display',sans-serif; font-size:32px; font-weight:900; }
+  .gauge-val span{ font-size:10px; color:var(--dim); font-family:'IBM Plex Mono',monospace; letter-spacing:1px;}
+
+  .timeline{ display:flex; align-items:flex-start; gap:0; margin:26px 0 10px; position:relative; }
+  .tl-step{ flex:1; text-align:center; position:relative; }
+  .tl-step .dot{ width:16px;height:16px;border-radius:50%; background:var(--panel-alt); border:2px solid var(--faint); margin:0 auto 10px; position:relative; z-index:2;}
+  .tl-step.done .dot{ background:var(--teal); border-color:var(--teal); }
+  .tl-step.warn .dot{ background:var(--red); border-color:var(--red); box-shadow:0 0 0 5px var(--red-dim); }
+  .tl-step .line{ position:absolute; top:7px; left:-50%; width:100%; height:2px; background:var(--faint); z-index:1;}
+  .tl-step:first-child .line{ display:none; }
+  .tl-step.done .line{ background:var(--teal); }
+  .tl-label{ font-size:11.5px; font-weight:600; }
+  .tl-sub{ font-size:10.5px; color:var(--dim); margin-top:2px;}
+
+  .impact-card{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel-alt); border-radius:8px; margin-bottom:10px;}
+  .impact-card .name{ font-size:13px; font-weight:600; } .impact-card .sub{ font-size:11px; color:var(--dim); }
+
+  .verify-card{ border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .verify-photo{ height:110px; background:
+      repeating-linear-gradient(45deg, #1e2833, #1e2833 8px, #202b37 8px, #202b37 16px);
+      display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:26px;}
+  .verify-body{ padding:16px; background:var(--panel); }
+  .check-row{ display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px dashed var(--border);}
+  .check-row:last-child{ border-bottom:none; }
+
+  .trend-bars{ display:flex; align-items:flex-end; gap:5px; height:60px; margin:14px 0;}
+  .trend-bars div{ flex:1; background:var(--teal); border-radius:3px 3px 0 0; opacity:.85;}
+
+  .msg-tag{ display:inline-block; margin-top:6px; }
+
+  .chat-bubble{ max-width:78%; padding:10px 14px; border-radius:12px; font-size:12.5px; margin-bottom:10px; line-height:1.5;}
+  .chat-bubble.out{ background:var(--teal-dim); color:var(--text); margin-left:auto; border-bottom-right-radius:3px;}
+  .chat-bubble.in{ background:var(--panel-alt); border-bottom-left-radius:3px;}
+  .chat-bubble.sys{ background:transparent; border:1px dashed var(--border); color:var(--dim); font-family:'IBM Plex Mono',monospace; font-size:11px;}
+
+  select, input[type=range]{ font-family:'IBM Plex Sans',sans-serif; background:var(--panel-alt); color:var(--text); border:1px solid var(--border); border-radius:7px; padding:9px 12px; font-size:13px;}
+  select{ width:100%; margin-bottom:10px;}
+
+  .compare-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;}
+  .compare-col{ padding:18px; border-radius:10px; }
+  .compare-col.current{ background:var(--panel-alt); border:1px solid var(--border);}
+  .compare-col.sim{ background:var(--teal-dim); border:1px solid var(--teal); }
+  .compare-metric{ display:flex; justify-content:space-between; padding:8px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,.06);}
+  .compare-metric:last-child{ border-bottom:none; }
+
+  .drawing-box{ height:180px; border-radius:10px; border:1px solid var(--border);
+    background:
+      linear-gradient(rgba(0,214,180,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,214,180,0.06) 1px, transparent 1px),
+      var(--panel-alt);
+    background-size:18px 18px; display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:30px;}
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:14px;}
+  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; padding-bottom:8px; border-bottom:1px solid var(--border);}
+  td{ padding:9px 0; border-bottom:1px solid var(--border); }
+
+  .waveform{ display:flex; align-items:center; gap:3px; height:36px; margin:10px 0;}
+  .waveform div{ width:3px; background:var(--teal); border-radius:2px; animation:wave 1.2s ease-in-out infinite;}
+  @keyframes wave{ 0%,100%{ transform:scaleY(0.3);} 50%{ transform:scaleY(1);} }
+
+  .tag-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+  .footnote{ margin-top:30px; padding-top:16px; border-top:1px solid var(--border); font-size:11.5px; color:var(--faint); }
+
+  .clock{ font-family:'IBM Plex Mono',monospace; color:var(--dim); font-size:11px; padding-left:10px; border-left:1px solid var(--border); }
+
+  .map-wrap{ position:relative; height:340px; }
+  .map-wrap svg{ width:100%; height:100%; }
+  .site-node{ position:absolute; transform:translate(-50%,-50%); text-align:center; }
+  .site-node .pulse-dot{ width:14px; height:14px; border-radius:50%; margin:0 auto 6px; position:relative; }
+  .site-node .pulse-dot::after{ content:""; position:absolute; inset:-6px; border-radius:50%; border:1.5px solid currentColor; animation:ringpulse 2.2s infinite; opacity:.7; }
+  @keyframes ringpulse{ 0%{ transform:scale(0.6); opacity:.8;} 100%{ transform:scale(2.1); opacity:0;} }
+  .site-node .site-label{ font-size:11px; font-weight:600; white-space:nowrap; }
+  .site-node .site-sub{ font-size:9.5px; color:var(--dim); font-family:'IBM Plex Mono',monospace; white-space:nowrap; }
+  .hub-node{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:86px; height:86px; border-radius:50%;
+    background:var(--teal-dim); border:2px solid var(--teal); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--teal); z-index:3;}
+  .hub-node i{ font-size:20px; margin-bottom:4px; }
+  .hub-node span{ font-size:9px; font-family:'IBM Plex Mono',monospace; letter-spacing:.5px; }
+
+  .compare-table th, .compare-table td{ text-align:center; }
+  .compare-table th:first-child, .compare-table td:first-child{ text-align:left; }
+  .compare-table td.yes{ color:var(--teal); font-size:15px; }
+  .compare-table td.no{ color:var(--faint); font-size:15px; }
+  .compare-table td.partial{ color:var(--amber); font-size:15px; }
+  .compare-table th.hl{ color:var(--teal); }
+  .compare-table td.hl-col{ background:rgba(0,214,180,0.05); }
+
+  .unique-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:16px; }
+  .unique-card{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; gap:14px; }
+  .unique-card i{ font-size:18px; color:var(--teal); width:34px; height:34px; border-radius:8px; background:var(--teal-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .unique-card b{ font-size:13.5px; } .unique-card p{ font-size:11.5px; color:var(--dim); margin-top:4px; line-height:1.5; }
+
+  .growth-chart{ display:flex; align-items:flex-end; gap:26px; height:160px; margin:24px 10px 6px; }
+  .growth-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .growth-bar{ width:100%; max-width:64px; border-radius:6px 6px 0 0; background:linear-gradient(180deg, var(--teal), var(--teal-dim)); position:relative; }
+  .growth-bar span{ position:absolute; top:-22px; left:0; right:0; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--teal); font-weight:600; }
+  .growth-label{ margin-top:10px; font-size:11px; text-align:center; color:var(--dim); font-weight:600; }
+  .growth-sub{ font-size:9.5px; color:var(--faint); text-align:center; }
+
+  .task-queue-item{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .task-queue-item:last-child{ border-bottom:none; }
+  .thinking-dots{ display:inline-flex; gap:3px; }
+  .thinking-dots span{ width:5px; height:5px; border-radius:50%; background:var(--amber); animation:tdot 1s infinite; }
+  .thinking-dots span:nth-child(2){ animation-delay:.2s; } .thinking-dots span:nth-child(3){ animation-delay:.4s; }
+  @keyframes tdot{ 0%,100%{ opacity:.25;} 50%{ opacity:1;} }
+
+  .scale-step{ display:flex; gap:16px; padding:18px 0; border-bottom:1px solid var(--border); }
+  .scale-step:last-child{ border-bottom:none; }
+  .scale-num{ font-family:'Big Shoulders Display',sans-serif; font-weight:900; font-size:30px; color:var(--faint); width:46px; flex-shrink:0; }
+  .scale-step.active .scale-num{ color:var(--teal); }
+
+  /* Marketplace / discovery */
+  .disc-map{ position:relative; height:300px; background:
+      linear-gradient(rgba(0,214,180,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,214,180,0.05) 1px, transparent 1px), var(--panel-alt);
+    background-size:22px 22px; border-radius:10px; overflow:hidden; }
+  .site-pin{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:20px; height:20px; border-radius:50% 50% 50% 0;
+    background:var(--amber); transform-origin:center; rotate:-45deg; z-index:3; box-shadow:0 0 0 5px rgba(255,182,72,0.18); }
+  .sup-pin{ position:absolute; transform:translate(-50%,-100%); text-align:center; }
+  .sup-pin .dot{ width:11px; height:11px; border-radius:50%; background:var(--teal); margin:0 auto 4px; border:2px solid #06231F;}
+  .sup-pin .lbl{ background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:10px; white-space:nowrap; }
+  .sup-pin .lbl b{ display:block; font-size:11px; }
+  .filter-chip{ display:inline-flex; align-items:center; padding:6px 13px; border-radius:20px; background:var(--panel-alt); border:1px solid var(--border); font-size:11.5px; color:var(--dim); margin:3px 5px 3px 0; }
+  .filter-chip.active{ background:var(--teal-dim); border-color:var(--teal); color:var(--teal); }
+  .result-row{ display:grid; grid-template-columns:1.6fr 0.8fr 0.8fr 0.8fr 0.8fr; align-items:center; padding:11px 4px; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .result-row:first-child{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; }
+  .order-box{ background:var(--teal-dim); border:1px solid var(--teal); border-radius:10px; padding:16px; margin-top:16px; }
+  .btn-confirm{ background:var(--teal); color:#06231F; border:none; padding:9px 18px; border-radius:7px; font-weight:600; font-size:12.5px; margin-top:10px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif;}
+
+  /* Logistics route */
+  .route-track{ position:relative; height:6px; background:var(--panel-alt); border-radius:3px; margin:50px 20px 10px; }
+  .route-track .fill{ position:absolute; left:0; top:0; height:100%; width:62%; background:var(--teal); border-radius:3px; }
+  .route-wp{ position:absolute; top:-6px; width:18px; height:18px; border-radius:50%; background:var(--panel); border:2px solid var(--teal); transform:translateX(-50%); }
+  .route-wp.pending{ border-color:var(--faint); }
+  .route-wp .wlabel{ position:absolute; top:-26px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--dim); white-space:nowrap; }
+  .route-truck{ position:absolute; top:-15px; transform:translateX(-50%); color:var(--amber); font-size:20px; left:62%; }
+  .fab-progress{ height:10px; background:var(--panel-alt); border-radius:5px; overflow:hidden; margin:6px 0 4px;}
+  .fab-progress > div{ height:100%; background:var(--teal); border-radius:5px; }
+
+  /* QR / provenance */
+  .qr-mock{ width:110px; height:110px; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); gap:2px; background:#fff; padding:8px; border-radius:8px; }
+  .qr-mock div{ background:#0D141C; }
+  .prov-row{ display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px dashed var(--border); }
+  .prov-row:last-child{ border-bottom:none; }
+
+  /* Analytics / budget */
+  .budget-row{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+  .budget-label{ width:110px; font-size:12px; font-weight:600; }
+  .budget-bars{ flex:1; display:flex; flex-direction:column; gap:4px; }
+  .budget-bars .bb{ height:12px; border-radius:3px; background:var(--panel-alt); position:relative; }
+  .budget-bars .bb > div{ height:100%; border-radius:3px; }
+  .budget-bars .bb.budgeted > div{ background:var(--faint); }
+  .budget-bars .bb.actual > div{ background:var(--teal); }
+  .budget-legend{ display:flex; gap:16px; font-size:11px; color:var(--dim); margin-bottom:14px; }
+  .legend-dot{ width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:5px; }
+</style>
+</head>
+<body>
+<div class="role-bar">
+  <svg class="crane-deco" viewBox="0 0 220 110" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="#FFB648" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <line x1="38" y1="108" x2="38" y2="14"/>
+      <line x1="38" y1="14" x2="205" y2="14"/>
+      <line x1="38" y1="14" x2="6" y2="26"/>
+      <line x1="38" y1="30" x2="160" y2="14"/>
+      <line x1="38" y1="30" x2="12" y2="20"/>
+      <line x1="160" y1="14" x2="160" y2="52"/>
+      <line x1="24" y1="108" x2="52" y2="108"/>
+    </g>
+  </svg>
+  <div class="role-bar-inner">
+    <div class="role-btn active" data-role="contractor" onclick="setRole('contractor')"><i class="fa-solid fa-helmet-safety"></i> Contractor / Procurement</div>
+    <div class="role-btn" data-role="supplier" onclick="setRole('supplier')"><i class="fa-solid fa-truck-field"></i> Supplier / Vendor</div>
+  </div>
+  <div class="lang-switcher">
+    <span class="lang-lbl">AI REPLIES IN</span>
+    <select id="lang-select">
+      <option value="English">English</option>
+      <option value="Hindi">हिंदी (Hindi)</option>
+      <option value="Bengali">বাংলা (Bengali)</option>
+      <option value="Telugu">తెలుగు (Telugu)</option>
+      <option value="Marathi">मराठी (Marathi)</option>
+      <option value="Tamil">தமிழ் (Tamil)</option>
+      <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+      <option value="Urdu">اردو (Urdu)</option>
+      <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+      <option value="Odia">ଓଡ଼ିଆ (Odia)</option>
+      <option value="Malayalam">മലയാളം (Malayalam)</option>
+      <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+    </select>
+  </div>
+</div>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-diagram-project"></i></div>
+      <div class="brand-name">SETU</div>
+    </div>
+    <div class="brand-tag">Supply chain graph intelligence</div>
+
+    <div id="nav-contractor">
+    <div class="nav-group-label">Platform</div>
+    <div class="nav-item active" data-target="sec-tower"><i class="fa-solid fa-tower-observation"></i> Control Tower</div>
+
+    <div class="nav-group-label">Core Engines</div>
+    <div class="nav-item" data-target="sec-risk"><i class="fa-solid fa-chart-line"></i> Risk Engine</div>
+    <div class="nav-item" data-target="sec-verify"><i class="fa-solid fa-shield-halved"></i> Verify Engine</div>
+    <div class="nav-item" data-target="sec-trust"><i class="fa-solid fa-handshake"></i> Trust Engine</div>
+    <div class="nav-item" data-target="sec-action"><i class="fa-solid fa-robot"></i> Action Engine</div>
+
+    <div class="nav-group-label">Marketplace</div>
+    <div class="nav-item" data-target="sec-discovery"><i class="fa-solid fa-map-location-dot"></i> Supplier Discovery <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-logistics"><i class="fa-solid fa-truck"></i> Logistics Tracking <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-provenance"><i class="fa-solid fa-qrcode"></i> Provenance Ledger <span class="nav-badge">NEW</span></div>
+
+    <div class="nav-group-label">Frontier</div>
+    <div class="nav-item" data-target="sec-whatif"><i class="fa-solid fa-sliders"></i> What-If Simulator <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-drawing"><i class="fa-solid fa-compass-drafting"></i> Drawing Intelligence <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-vernacular"><i class="fa-solid fa-comments"></i> Vernacular AI <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-voice"><i class="fa-solid fa-phone-volume"></i> Voice Agent <span class="nav-badge">NEW</span></div>
+
+    <div class="nav-group-label">Insights</div>
+    <div class="nav-item" data-target="sec-realtime"><i class="fa-solid fa-satellite-dish"></i> Real-Time Ops</div>
+    <div class="nav-item" data-target="sec-analytics"><i class="fa-solid fa-chart-pie"></i> Analytics &amp; Budget <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-sustain"><i class="fa-solid fa-leaf"></i> Sustainability <span class="nav-badge">NEW</span></div>
+    <div class="nav-item" data-target="sec-whysetu"><i class="fa-solid fa-award"></i> Why Setu</div>
+    <div class="nav-item" data-target="sec-scale"><i class="fa-solid fa-chart-simple"></i> Scalability</div>
+    </div>
+
+    <div id="nav-supplier" style="display:none;">
+      <div class="nav-group-label">Supplier Portal</div>
+      <div class="nav-item" data-target="sec-sup-home"><i class="fa-solid fa-house"></i> My Dashboard</div>
+      <div class="nav-item" data-target="sec-sup-orders"><i class="fa-solid fa-clipboard-list"></i> My Orders</div>
+      <div class="nav-item" data-target="sec-sup-fab"><i class="fa-solid fa-industry"></i> Update Fabrication</div>
+      <div class="nav-item" data-target="sec-sup-verify"><i class="fa-solid fa-camera"></i> Submit Delivery Proof</div>
+      <div class="nav-item" data-target="sec-sup-trust"><i class="fa-solid fa-star"></i> My Trust Score</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="topbar-title">Control Tower</h1>
+        <p id="topbar-sub">Portfolio-wide view across every active site</p>
+      </div>
+      <div class="live-pill"><span class="live-dot"></span> LIVE DEMO DATA <span class="clock" id="live-clock">--:--:--</span></div>
+    </div>
+
+    <div class="sections">
+
+      <!-- ============ CONTROL TOWER ============ -->
+      <section id="sec-tower" class="view active">
+        <div class="grid grid-4" style="margin-bottom:18px;">
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="stat-num">12</div><div class="stat-label">Active projects on graph</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="stat-num amber">7</div><div class="stat-label">Open risk alerts</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-truck-fast"></i></div><div class="stat-num">84</div><div class="stat-label">Vendors tracked</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div class="stat-num">23</div><div class="stat-label">Deliveries verified today</div></div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-title">Site risk heatmap</div>
+            <div class="site-row"><div class="site-name">Tower B — Chennai</div><div class="risk-bar"><div style="width:82%;background:var(--red);"></div></div><div class="site-meta">HIGH · 4 alerts</div></div>
+            <div class="site-row"><div class="site-name">Riverfront — Pune</div><div class="risk-bar"><div style="width:54%;background:var(--amber);"></div></div><div class="site-meta">MEDIUM · 2 alerts</div></div>
+            <div class="site-row"><div class="site-name">Metro Depot — Hyderabad</div><div class="risk-bar"><div style="width:20%;background:var(--teal);"></div></div><div class="site-meta">LOW · 0 alerts</div></div>
+            <div class="site-row"><div class="site-name">Greenfield — Nagpur</div><div class="risk-bar"><div style="width:66%;background:var(--amber);"></div></div><div class="site-meta">MEDIUM · 1 alert</div></div>
+            <div class="site-row"><div class="site-name">Harbor Link — Kochi</div><div class="risk-bar"><div style="width:12%;background:var(--teal);"></div></div><div class="site-meta">LOW · 0 alerts</div></div>
+            <button class="ai-btn" style="margin-top:14px;" onclick="aiSuggest(this, 'Tower B in Chennai has a HIGH risk score of 78 due to a delayed steel shipment from Shree Balaji Steel Traders, whose trust score is 62/100 and trending down. There are 4 open alerts at this site. What should the procurement manager do right now?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+            <div class="ai-result" style="display:none;"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Live engine feed</div>
+            <ul class="feed" id="live-feed">
+              <li><span class="feed-dot" style="background:var(--red);"></span><div><b>Verify Engine</b> flagged Delivery #4822 — certificate mismatch<span class="feed-time">Tower B · just now</span></div></li>
+              <li><span class="feed-dot" style="background:var(--amber);"></span><div><b>Risk Engine</b> raised delay probability to 78% on Shipment #4821<span class="feed-time">Tower B · 3m ago</span></div></li>
+              <li><span class="feed-dot" style="background:var(--teal);"></span><div><b>Action Engine</b> sent follow-up to Shree Balaji Steel Traders<span class="feed-time">Tower B · 6m ago</span></div></li>
+              <li><span class="feed-dot" style="background:var(--teal);"></span><div><b>Trust Engine</b> updated vendor score for Ramesh Traders → 62/100<span class="feed-time">Riverfront · 11m ago</span></div></li>
+              <li><span class="feed-dot" style="background:var(--teal);"></span><div><b>Verify Engine</b> matched Delivery #4819 to PO — 98% confidence<span class="feed-time">Greenfield · 18m ago</span></div></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-title">Material lifecycle graph — live preview</div>
+          <div class="graph-preview">
+            <svg viewBox="0 0 800 170">
+              <g stroke="#2A3947" stroke-width="1.5" fill="none">
+                <line x1="120" y1="85" x2="280" y2="45"/><line x1="120" y1="85" x2="280" y2="125"/>
+                <line x1="280" y1="45" x2="440" y2="30"/><line x1="280" y1="45" x2="440" y2="85"/>
+                <line x1="280" y1="125" x2="440" y2="85"/><line x1="280" y1="125" x2="440" y2="145"/>
+                <line x1="440" y1="30" x2="600" y2="55"/><line x1="440" y1="85" x2="600" y2="55"/>
+                <line x1="440" y1="85" x2="600" y2="115"/><line x1="440" y1="145" x2="600" y2="115"/>
+                <line x1="600" y1="55" x2="700" y2="85"/><line x1="600" y1="115" x2="700" y2="85"/>
+              </g>
+              <g>
+                <circle cx="120" cy="85" r="9" fill="#00D6B4"/>
+                <circle cx="280" cy="45" r="6" fill="#3A4C5A"/><circle cx="280" cy="125" r="6" fill="#3A4C5A"/>
+                <circle cx="440" cy="30" r="6" fill="#3A4C5A"/><circle cx="440" cy="85" r="7" fill="#FFB648"/><circle cx="440" cy="145" r="6" fill="#3A4C5A"/>
+                <circle cx="600" cy="55" r="6" fill="#3A4C5A"/><circle cx="600" cy="115" r="7" fill="#FF5D6C"/>
+                <circle cx="700" cy="85" r="9" fill="#00D6B4"/>
+              </g>
+            </svg>
+          </div>
+          <div class="graph-caption">1,204 nodes · 3,880 relationships · updated 4 seconds ago</div>
+        </div>
+      </section>
+
+      <!-- ============ RISK ENGINE ============ -->
+      <section id="sec-risk" class="view">
+        <h2 class="section-h">Risk Engine</h2>
+        <p class="section-sub">Forecasting & optimization — a probabilistic model traverses the graph to predict not just delays, but exactly what they break downstream.</p>
+
+        <select><option>Shipment #4821 — TMT Steel Beams, Tower B</option><option>Shipment #4790 — Ready-mix Concrete, Riverfront</option></select>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-title">Cascading timeline</div>
+            <div class="timeline">
+              <div class="tl-step done"><div class="dot"></div><div class="tl-label">Ordered</div><div class="tl-sub">Jun 22</div></div>
+              <div class="tl-step done"><div class="line"></div><div class="dot"></div><div class="tl-label">Fabricated</div><div class="tl-sub">Jun 29</div></div>
+              <div class="tl-step warn"><div class="line"></div><div class="dot"></div><div class="tl-label">In Transit</div><div class="tl-sub">Delayed +4d</div></div>
+              <div class="tl-step"><div class="line"></div><div class="dot"></div><div class="tl-label">Delivery</div><div class="tl-sub">Est. Jul 14</div></div>
+            </div>
+            <div class="badge amber" style="margin-top:10px;"><i class="fa-solid fa-cloud-showers-heavy"></i> Monsoon signal: +12% transit delay probability this week</div>
+
+            <div style="margin-top:20px;">
+              <div class="impact-card"><div><div class="name">Elevator install — Tower B</div><div class="sub">Depends on this shipment</div></div><span class="badge red">+4 days · HIGH</span></div>
+              <div class="impact-card"><div><div class="name">Facade work — Tower B</div><div class="sub">Depends on elevator shaft closeout</div></div><span class="badge amber">+2 days · MEDIUM</span></div>
+              <div class="impact-card"><div><div class="name">Final inspection milestone</div><div class="sub">Contractually tied to facade work</div></div><span class="badge amber">+2 days · MEDIUM</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Computed risk score</div>
+            <div class="gauge" style="background:conic-gradient(var(--red) 0% 78%, var(--panel-alt) 78% 100%);">
+              <div class="gauge-val"><b>78</b><span>HIGH RISK</span></div>
+            </div>
+            <p style="text-align:center; font-size:11.5px; color:var(--dim); margin-top:16px;">Weighted from vendor history, monsoon signal, and current logistics congestion.</p>
+            <button class="ai-btn" style="margin-top:6px; width:100%; justify-content:center;" onclick="aiSuggest(this, 'Shipment #4821 (TMT steel beams for Tower B) is delayed 4 days due to transit congestion, with a monsoon signal adding 12% delay probability this week. Risk score is 78/100 (HIGH). Downstream, the elevator install and facade work are both at risk. What should be done?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+            <div class="ai-result" style="display:none;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VERIFY ENGINE ============ -->
+      <section id="sec-verify" class="view">
+        <h2 class="section-h">Verify Engine</h2>
+        <p class="section-sub">Vision-language models reading job-site conditions — matching deliveries to POs, and catching counterfeit material before it's installed.</p>
+
+        <div class="grid grid-2-even">
+          <div class="verify-card">
+            <div class="verify-photo"><i class="fa-solid fa-image"></i></div>
+            <div class="verify-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><b>Delivery #4819</b><span class="badge green"><i class="fa-solid fa-check"></i> MATCH</span></div>
+              <div class="check-row"><span>Quantity</span><span>500 / 500 ✓</span></div>
+              <div class="check-row"><span>SKU</span><span>TMT-Fe500D ✓</span></div>
+              <div class="check-row"><span>Certificate pattern</span><span>Verified ✓</span></div>
+              <div class="check-row"><span>Confidence</span><span style="color:var(--teal);">98%</span></div>
+            </div>
+          </div>
+
+          <div class="verify-card">
+            <div class="verify-photo"><i class="fa-solid fa-image"></i></div>
+            <div class="verify-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><b>Delivery #4822</b><span class="badge red"><i class="fa-solid fa-triangle-exclamation"></i> FLAGGED</span></div>
+              <div class="check-row"><span>Quantity</span><span>200 / 200 ✓</span></div>
+              <div class="check-row"><span>SKU</span><span style="color:var(--amber);">Mismatch ⚠</span></div>
+              <div class="check-row"><span>Certificate pattern</span><span style="color:var(--red);">Inconsistent batch stamp ✗</span></div>
+              <div class="check-row"><span>Confidence</span><span style="color:var(--red);">41%</span></div>
+              <p style="font-size:11px; color:var(--dim); margin-top:10px;">Recommend physical inspection before offloading.</p>
+              <button class="ai-btn" style="margin-top:10px;" onclick="aiSuggest(this, 'Delivery #4822 was flagged by the Verify Engine: SKU mismatch and an inconsistent certificate batch stamp pattern, confidence only 41%. What should the site team do before offloading this delivery?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+              <div class="ai-result" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TRUST ENGINE ============ -->
+      <section id="sec-trust" class="view">
+        <h2 class="section-h">Trust Engine</h2>
+        <p class="section-sub">Vendor reliability, scored from how they actually communicate — not a rating someone entered once.</p>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-title">Vendor: Shree Balaji Steel Traders</div>
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <span class="stat-num amber" style="font-size:46px;">62</span><span style="color:var(--dim); font-size:13px;">/ 100 · trending down <i class="fa-solid fa-arrow-trend-down"></i></span>
+            </div>
+            <div class="trend-bars">
+              <div style="height:80%;"></div><div style="height:70%;"></div><div style="height:75%;"></div>
+              <div style="height:55%;background:var(--amber);"></div><div style="height:40%;background:var(--amber);"></div><div style="height:35%;background:var(--red);"></div>
+            </div>
+            <div class="card-title" style="margin-top:6px;">Signal feed</div>
+            <div style="font-size:12px; color:var(--dim); line-height:1.7;">
+              "Order confirmed, dispatching tomorrow" <span class="msg-tag badge green">Clear commitment +3</span><br>
+              "Sorry, thoda delay hoga, rain ki wajah se" <span class="msg-tag badge amber">Weather-linked, partial excuse −1</span><br>
+              "Delivery Friday tak ho jayega" <span class="msg-tag badge red">Vague timeline −4</span>
+            </div>
+            <button class="ai-btn" style="margin-top:14px;" onclick="aiSuggest(this, 'Vendor Shree Balaji Steel Traders has a trust score of 62/100 and is trending down, based on vague delivery commitments and a weather-related delay. What should the procurement manager consider when placing their next order?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+            <div class="ai-result" style="display:none;"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Portfolio vendor ranking</div>
+            <div class="site-row"><div class="site-name">Kochi Steelworks</div><div class="risk-bar"><div style="width:91%;background:var(--teal);"></div></div><div class="site-meta">91 / 100</div></div>
+            <div class="site-row"><div class="site-name">Anand Cements</div><div class="risk-bar"><div style="width:84%;background:var(--teal);"></div></div><div class="site-meta">84 / 100</div></div>
+            <div class="site-row"><div class="site-name">Ramesh Traders</div><div class="risk-bar"><div style="width:62%;background:var(--amber);"></div></div><div class="site-meta">62 / 100</div></div>
+            <div class="site-row"><div class="site-name">Shree Balaji Steel</div><div class="risk-bar"><div style="width:62%;background:var(--amber);"></div></div><div class="site-meta">62 / 100</div></div>
+            <div class="site-row"><div class="site-name">Sunrise Logistics</div><div class="risk-bar"><div style="width:38%;background:var(--red);"></div></div><div class="site-meta">38 / 100</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ACTION ENGINE ============ -->
+      <section id="sec-action" class="view">
+        <h2 class="section-h">Action Engine</h2>
+        <p class="section-sub">Agentic systems — retrieves graph data, drafts outreach, parses replies, and answers questions with computed, explainable answers.</p>
+
+        <div class="grid grid-2-even">
+          <div class="card">
+            <div class="card-title">Autonomous outreach</div>
+            <div class="chat-bubble out">Hi Ramesh, checking on PO #4821 — is Thursday's ETA still on track?</div>
+            <div class="chat-bubble in">Bhai thoda delay hoga, Monday tak ho jayega. Port pe congestion hai.</div>
+            <div class="chat-bubble sys"><i class="fa-solid fa-diagram-project"></i> Graph updated: ETA shifted to Monday · reason: logistics congestion · cascading impact recalculated</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Ask the graph</div>
+            <select><option>What's blocking the elevator install on Tower B?</option></select>
+            <div class="chat-bubble sys" style="font-family:'IBM Plex Mono',monospace; font-size:10.5px;">MATCH (t:Task {name:"Elevator Install"})-[:DEPENDS_ON]->(s:Shipment)<br>WHERE s.status = "delayed" RETURN s, t</div>
+            <div class="chat-bubble in">Elevator install depends on Shipment #4821 (steel beams), delayed 4 days — vendor-confirmed port congestion. Substitute option: Vendor C, 2-day lead time available.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SUPPLIER DISCOVERY ============ -->
+      <section id="sec-discovery" class="view">
+        <h2 class="section-h">Supplier Discovery</h2>
+        <p class="section-sub">A live map of every supplier around a site — stock, price, and ETA in one search. Ratings shown here are the same Trust Engine scores used everywhere else in Setu, not a separate review system.</p>
+
+        <div class="card">
+          <div class="card-title">Nearby: cement, steel, and 12 other categories</div>
+          <div class="disc-map">
+            <div class="site-pin"></div>
+            <div class="sup-pin" style="top:20%; left:30%;"><div class="dot"></div><div class="lbl"><b>Anand Cements</b>2.4 km · ₹342/bag</div></div>
+            <div class="sup-pin" style="top:30%; left:70%;"><div class="dot"></div><div class="lbl"><b>Kochi Steelworks</b>4.1 km · ★4.8</div></div>
+            <div class="sup-pin" style="top:65%; left:22%;"><div class="dot"></div><div class="lbl"><b>Sunrise Sand Co.</b>1.8 km · ETA 45m</div></div>
+            <div class="sup-pin" style="top:70%; left:68%;"><div class="dot"></div><div class="lbl"><b>Ramesh Traders</b>6.2 km · ★3.4</div></div>
+            <div class="sup-pin" style="top:45%; left:50%;"><div class="dot"></div><div class="lbl"><b>Shree Balaji Steel</b>3.0 km · ★6.2</div></div>
+          </div>
+          <div style="margin-top:14px;">
+            <span class="filter-chip active">Nearest</span><span class="filter-chip">Lowest price</span><span class="filter-chip">Fastest delivery</span>
+            <span class="filter-chip">Highest rated</span><span class="filter-chip">Certified only</span><span class="filter-chip">Bulk discount</span><span class="filter-chip">Open now</span>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:18px;">
+          <div class="card">
+            <div class="card-title">Search: "OPC Cement"</div>
+            <div class="result-row"><span>Supplier</span><span>Distance</span><span>Price</span><span>ETA</span><span>Rating</span></div>
+            <div class="result-row"><span>Anand Cements</span><span>2.4 km</span><span>₹342/bag</span><span>45 min</span><span>★ 4.8</span></div>
+            <div class="result-row"><span>Sunrise Traders</span><span>3.9 km</span><span>₹329/bag</span><span>70 min</span><span>★ 4.1</span></div>
+            <div class="result-row"><span>Metro Building Co.</span><span>5.5 km</span><span>₹355/bag</span><span>40 min</span><span>★ 4.6</span></div>
+          </div>
+          <div class="order-box">
+            <div class="card-title" style="color:var(--teal);">One-click order</div>
+            <div class="prov-row"><span>Supplier</span><b>Anand Cements</b></div>
+            <div class="prov-row"><span>Quantity</span><b>500 bags</b></div>
+            <div class="prov-row"><span>Delivery date</span><b>Fri, 10 Jul</b></div>
+            <div class="prov-row"><span>AI-estimated arrival</span><b style="color:var(--teal);">2:30 PM ± 20 min</b></div>
+            <button class="btn-confirm">Confirm order →</button>
+            <button class="ai-btn" style="margin-top:10px; background:transparent;" onclick="aiSuggest(this, 'A contractor is about to place a one-click order for 500 bags of OPC cement from Anand Cements, 2.4km away, ₹342/bag, arriving in 45 minutes. Compared to Sunrise Traders (3.9km, ₹329/bag, 70 min) and Metro Building Co. (5.5km, ₹355/bag, 40 min), is this a good choice or should they consider something else?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+            <div class="ai-result" style="display:none;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ LOGISTICS TRACKING ============ -->
+      <section id="sec-logistics" class="view">
+        <h2 class="section-h">Logistics Tracking</h2>
+        <p class="section-sub">Live GPS position and fabrication status write into the same graph the Risk Engine reads — not a separate tracking screen that goes stale.</p>
+
+        <div class="card">
+          <div class="card-title">Shipment #4821 — en route to Tower B</div>
+          <div class="route-track">
+            <div class="fill"></div>
+            <div class="route-wp" style="left:2%;"><span class="wlabel">Warehouse</span></div>
+            <div class="route-wp" style="left:35%;"><span class="wlabel">Highway</span></div>
+            <div class="route-truck"><i class="fa-solid fa-truck"></i></div>
+            <div class="route-wp" style="left:62%;"><span class="wlabel">City entry</span></div>
+            <div class="route-wp pending" style="left:98%;"><span class="wlabel">Site</span></div>
+          </div>
+          <div class="tag-row">
+            <span class="badge green">20 km away</span><span class="badge amber"><i class="fa-solid fa-triangle-exclamation"></i> Moderate traffic</span><span class="badge green">ETA 2:45 PM</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-title">Fabrication in progress</div>
+          <p style="font-size:12.5px; margin-bottom:4px;">TMT Rebar batch — Kochi Steelworks</p>
+          <div class="fab-progress"><div style="width:80%;"></div></div>
+          <p style="font-size:10.5px; color:var(--dim); margin-bottom:16px;">Quality inspection → packaging → dispatch (80%)</p>
+          <p style="font-size:12.5px; margin-bottom:4px;">Ready-mix Concrete — Anand Cements</p>
+          <div class="fab-progress"><div style="width:35%; background:var(--amber);"></div></div>
+          <p style="font-size:10.5px; color:var(--dim);">Raw materials received → production started (35%)</p>
+        </div>
+      </section>
+
+      <!-- ============ PROVENANCE LEDGER ============ -->
+      <section id="sec-provenance" class="view">
+        <h2 class="section-h">Provenance Ledger</h2>
+        <p class="section-sub">Every delivery the Verify Engine approves gets a tamper-evident, QR-linked record — the answer to "what was actually used here" five years from now, not just today.</p>
+
+        <div class="grid grid-2">
+          <div class="card" style="display:flex; gap:20px; align-items:flex-start;">
+            <div class="qr-mock" id="qr-mock"></div>
+            <div>
+              <div class="card-title">Batch SB-2291</div>
+              <div class="prov-row"><span>Material</span><b>TMT Rebar, Fe500D</b></div>
+              <div class="prov-row"><span>Supplier</span><b>Kochi Steelworks</b></div>
+              <div class="prov-row"><span>Mfg. date</span><b>02 Jul 2026</b></div>
+              <div class="prov-row"><span>Verify Engine check</span><b style="color:var(--teal);">Passed · 98%</b></div>
+              <div class="prov-row"><span>Installed at</span><b>Tower B, Floor 4</b></div>
+              <div class="prov-row"><span>Warranty</span><b>10 years</b></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Why this matters at scale</div>
+            <p style="font-size:12.5px; color:var(--dim); line-height:1.7;">Counterfeit material failures often surface years after installation, when nobody can prove what was actually used. Every scan here is written once and never edited — so a structural question in 2036 has the same answer as it does today.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WHAT-IF SIMULATOR ============ -->
+      <section id="sec-whatif" class="view">
+        <h2 class="section-h">What-If Simulator</h2>
+        <p class="section-sub">Forecasting & optimization taken further — simulate a decision before you make it, and see the cascading impact instantly.</p>
+
+        <select id="scenario-select" onchange="updateScenario()">
+          <option value="0">Do nothing — accept current delay</option>
+          <option value="1">Switch shipment to air freight</option>
+          <option value="2">Switch to backup vendor (Vendor C)</option>
+        </select>
+
+        <div class="compare-grid">
+          <div class="compare-col current">
+            <div class="card-title">Current plan</div>
+            <div class="compare-metric"><span>Delay risk</span><b>78% · HIGH</b></div>
+            <div class="compare-metric"><span>Schedule impact</span><b>+4 days</b></div>
+            <div class="compare-metric"><span>Cost impact</span><b>₹0 (baseline)</b></div>
+          </div>
+          <div class="compare-col sim">
+            <div class="card-title" style="color:var(--teal);">Simulated plan</div>
+            <div class="compare-metric"><span>Delay risk</span><b id="sim-risk">78% · HIGH</b></div>
+            <div class="compare-metric"><span>Schedule impact</span><b id="sim-sched">+4 days</b></div>
+            <div class="compare-metric"><span>Cost impact</span><b id="sim-cost">₹0</b></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:var(--faint); margin-top:14px;">Simulation runs a Monte Carlo pass over the graph's dependency chain — not a static rule, so it re-evaluates as vendor and logistics signals change.</p>
+        <button class="ai-btn" style="margin-top:14px;" onclick="aiSuggest(this, 'Comparing options for a delayed steel shipment: Option A, do nothing (78% delay risk, +4 days, ₹0 cost). Option B, switch to air freight (22% delay risk, +0 days, ₹1,84,000 extra cost). Option C, switch to backup vendor (31% delay risk, +1 day, ₹46,000 cost). Which is the better call for a mid-size contractor, and why?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+        <div class="ai-result" style="display:none;"></div>
+      </section>
+
+      <!-- ============ DRAWING INTELLIGENCE ============ -->
+      <section id="sec-drawing" class="view">
+        <h2 class="section-h">Drawing Intelligence</h2>
+        <p class="section-sub">Document intelligence beyond OCR — reads structural drawings and specs directly into the graph, cross-checked against the BOQ.</p>
+
+        <div class="grid grid-2">
+          <div class="drawing-box"><i class="fa-solid fa-file-lines"></i></div>
+          <div class="card">
+            <div class="card-title">Structural_Plan_TowerB_Rev4.pdf</div>
+            <p style="font-size:12px; color:var(--dim);">Extracted 14 line items across 3 floors in 6 seconds. 2 flagged for BOQ mismatch.</p>
+          </div>
+        </div>
+        <table>
+          <tr><th>Zone</th><th>Material</th><th>Spec</th><th>Quantity</th><th>Status</th></tr>
+          <tr><td>Floor 4</td><td>TMT Rebar</td><td>Fe500D</td><td>12.4 t</td><td><span class="badge green">Matches PO</span></td></tr>
+          <tr><td>Floor 4</td><td>Ready-mix Concrete</td><td>M25</td><td>340 m³</td><td><span class="badge green">Matches PO</span></td></tr>
+          <tr><td>Floor 5</td><td>TMT Rebar</td><td>Fe500D</td><td>11.8 t</td><td><span class="badge amber">No PO yet — draft created</span></td></tr>
+        </table>
+      </section>
+
+      <!-- ============ VERNACULAR AI ============ -->
+      <section id="sec-vernacular" class="view">
+        <h2 class="section-h">Vernacular Intelligence</h2>
+        <p class="section-sub">Construction-specific AI — fine-tuned on how vendors actually write across 12 major Indian languages and their English-mixed forms, where generic models struggle.</p>
+
+        <div class="card">
+          <div class="chat-bubble in">Bhai delivery thoda late ho jayegi, monsoon ki wajah se road band hai.</div>
+          <div class="tag-row"><span class="badge amber">Language: Hindi</span><span class="badge amber">Reason: weather</span><span class="badge amber">Confidence: high</span></div>
+          <div class="chat-bubble in" style="margin-top:16px;">Material Friday tak pakka aa jayega, no tension.</div>
+          <div class="tag-row"><span class="badge green">Language: Hinglish</span><span class="badge green">New ETA: Friday</span><span class="badge red">Commitment strength: low ("pakka" pattern historically unreliable)</span></div>
+          <div class="chat-bubble in" style="margin-top:16px;">Order confirm pannitten, naalaikku dispatch pannuvom.</div>
+          <div class="tag-row"><span class="badge green">Language: Tanglish (Tamil-English)</span><span class="badge green">Commitment: dispatch tomorrow — high confidence</span></div>
+          <div class="chat-bubble in" style="margin-top:16px;">আগামীকাল সকালে মাল পাঠিয়ে দেব, চিন্তা করবেন না।</div>
+          <div class="tag-row"><span class="badge green">Language: Bengali</span><span class="badge green">New ETA: tomorrow morning</span><span class="badge amber">Confidence: medium</span></div>
+          <div class="chat-bubble in" style="margin-top:16px;">సార్ మెటీరియల్ రెండు రోజుల్లో వస్తుంది, ట్రాఫిక్ వల్ల కొంచెం ఆలస్యం అయ్యింది.</div>
+          <div class="tag-row"><span class="badge green">Language: Telugu</span><span class="badge amber">Reason: traffic</span><span class="badge amber">New ETA: 2 days</span></div>
+        </div>
+        <p style="font-size:11px; color:var(--faint); margin-top:12px;">Also fine-tuned on Marathi, Gujarati, Urdu, Kannada, Odia, Malayalam, and Punjabi vendor communication.</p>
+      </section>
+
+      <!-- ============ VOICE AGENT ============ -->
+      <section id="sec-voice" class="view">
+        <h2 class="section-h">Voice Agent</h2>
+        <p class="section-sub">Agentic systems, extended to phone calls — because many vendors only respond reliably by voice, not text.</p>
+
+        <div class="card" style="max-width:520px;">
+          <div class="card-title">Outbound call — Ramesh Traders</div>
+          <div class="waveform">
+            <div style="height:40%; animation-delay:0s;"></div><div style="height:80%; animation-delay:.1s;"></div><div style="height:55%; animation-delay:.2s;"></div>
+            <div style="height:90%; animation-delay:.3s;"></div><div style="height:35%; animation-delay:.4s;"></div><div style="height:70%; animation-delay:.5s;"></div>
+            <div style="height:50%; animation-delay:.6s;"></div><div style="height:85%; animation-delay:.7s;"></div><div style="height:45%; animation-delay:.8s;"></div>
+          </div>
+          <p style="font-size:11px; color:var(--faint);">03:41 · auto-transcribed</p>
+          <p style="font-size:12.5px; color:var(--dim); margin:12px 0; font-style:italic;">"...yes, confirmed — Thursday delivery, we had a two-day hold at the port but it's cleared now..."</p>
+          <div class="tag-row">
+            <span class="badge green">New ETA: Thursday</span>
+            <span class="badge amber">Reason: port congestion</span>
+            <span class="badge green">Commitment confidence: high</span>
+          </div>
+        </div>
+        <div class="footnote">Roadmap direction: causal-inference risk scoring (separating "chronically slow" vendors from "delayed by weather this once") and federated, privacy-preserving vendor benchmarking across companies that don't want to share raw data directly.</div>
+      </section>
+
+      <!-- ============ REAL-TIME OPS ============ -->
+      <section id="sec-realtime" class="view">
+        <h2 class="section-h">Real-Time Operations</h2>
+        <p class="section-sub">Setu never stops watching. Every site reports into the same live graph, and the engines are always running against it — not on a nightly batch job.</p>
+
+        <div class="card">
+          <div class="card-title">Nationwide live status</div>
+          <div class="map-wrap">
+            <svg viewBox="0 0 600 340" style="position:absolute; inset:0;">
+              <g stroke="#26333F" stroke-width="1.5">
+                <line x1="300" y1="170" x2="120" y2="70"/>
+                <line x1="300" y1="170" x2="480" y2="60"/>
+                <line x1="300" y1="170" x2="500" y2="200"/>
+                <line x1="300" y1="170" x2="340" y2="290"/>
+                <line x1="300" y1="170" x2="100" y2="250"/>
+              </g>
+            </svg>
+            <div class="hub-node"><i class="fa-solid fa-diagram-project"></i><span>SETU CORE</span></div>
+
+            <div class="site-node" style="top:20%; left:20%;"><div class="pulse-dot" style="background:var(--red); color:var(--red);"></div><div class="site-label">Tower B · Chennai</div><div class="site-sub">risk 78 · synced 2s ago</div></div>
+            <div class="site-node" style="top:17%; left:80%;"><div class="pulse-dot" style="background:var(--amber); color:var(--amber);"></div><div class="site-label">Riverfront · Pune</div><div class="site-sub">risk 54 · synced 4s ago</div></div>
+            <div class="site-node" style="top:59%; left:83%;"><div class="pulse-dot" style="background:var(--teal); color:var(--teal);"></div><div class="site-label">Metro Depot · Hyderabad</div><div class="site-sub">risk 20 · synced 1s ago</div></div>
+            <div class="site-node" style="top:85%; left:57%;"><div class="pulse-dot" style="background:var(--amber); color:var(--amber);"></div><div class="site-label">Greenfield · Nagpur</div><div class="site-sub">risk 66 · synced 6s ago</div></div>
+            <div class="site-node" style="top:74%; left:17%;"><div class="pulse-dot" style="background:var(--teal); color:var(--teal);"></div><div class="site-label">Harbor Link · Kochi</div><div class="site-sub">risk 12 · synced 3s ago</div></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-title">Agent activity right now</div>
+          <div class="task-queue-item"><i class="fa-solid fa-robot" style="color:var(--teal);"></i><div style="flex:1;"><b>Action Engine</b> — <span id="task1">drafting outreach to Ramesh Traders</span></div><span class="thinking-dots"><span></span><span></span><span></span></span><span class="badge amber">Tower B</span></div>
+          <div class="task-queue-item"><i class="fa-solid fa-handshake" style="color:var(--teal);"></i><div style="flex:1;"><b>Trust Engine</b> — <span id="task2">re-scoring vendor after new message</span></div><span class="thinking-dots"><span></span><span></span><span></span></span><span class="badge amber">Riverfront</span></div>
+          <div class="task-queue-item"><i class="fa-solid fa-sliders" style="color:var(--teal);"></i><div style="flex:1;"><b>Simulator</b> — <span id="task3">running air-freight scenario for Shipment #4821</span></div><span class="thinking-dots"><span></span><span></span><span></span></span><span class="badge amber">Tower B</span></div>
+        </div>
+      </section>
+
+      <!-- ============ ANALYTICS & BUDGET ============ -->
+      <section id="sec-analytics" class="view">
+        <h2 class="section-h">Analytics &amp; Budget Intelligence</h2>
+        <p class="section-sub">Portfolio-wide KPIs and budget variance, computed from the same graph — not a separate BI export that's a week stale.</p>
+
+        <div class="grid grid-4" style="margin-bottom:18px;">
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-truck-ramp-box"></i></div><div class="stat-num">87%</div><div class="stat-label">On-time delivery rate</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div><div class="stat-num">14d</div><div class="stat-label">Avg. procurement cycle time</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-piggy-bank"></i></div><div class="stat-num">6.2%</div><div class="stat-label">Cost savings vs. budget</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-heart-pulse"></i></div><div class="stat-num amber">82</div><div class="stat-label">Project health score / 100</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Budget vs. actual, by category</div>
+          <div class="budget-legend"><span><span class="legend-dot" style="background:var(--faint);"></span>Budgeted</span><span><span class="legend-dot" style="background:var(--teal);"></span>Actual</span></div>
+          <div class="budget-row"><div class="budget-label">Steel</div><div class="budget-bars"><div class="bb budgeted"><div style="width:100%;"></div></div><div class="bb actual"><div style="width:108%; max-width:100%;"></div></div></div></div>
+          <div class="budget-row"><div class="budget-label">Cement</div><div class="budget-bars"><div class="bb budgeted"><div style="width:100%;"></div></div><div class="bb actual"><div style="width:91%;"></div></div></div></div>
+          <div class="budget-row"><div class="budget-label">Logistics</div><div class="budget-bars"><div class="bb budgeted"><div style="width:100%;"></div></div><div class="bb actual"><div style="width:96%;"></div></div></div></div>
+          <div class="budget-row"><div class="budget-label">Finishes</div><div class="budget-bars"><div class="bb budgeted"><div style="width:100%;"></div></div><div class="bb actual"><div style="width:84%;"></div></div></div></div>
+        </div>
+      </section>
+
+      <!-- ============ SUSTAINABILITY ============ -->
+      <section id="sec-sustain" class="view">
+        <h2 class="section-h">Sustainability</h2>
+        <p class="section-sub">Sourcing signals feed into the same vendor ranking as price and reliability — sustainability isn't a separate report nobody reads.</p>
+
+        <div class="grid grid-4">
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-route"></i></div><div class="stat-num">64%</div><div class="stat-label">Locally sourced materials</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-cloud"></i></div><div class="stat-num">18%</div><div class="stat-label">Transport emissions saved</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-certificate"></i></div><div class="stat-num">22/84</div><div class="stat-label">Green-certified vendors</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-recycle"></i></div><div class="stat-num">340t</div><div class="stat-label">Waste diverted from landfill</div></div>
+        </div>
+      </section>
+
+      <!-- ============ WHY SETU ============ -->
+      <section id="sec-whysetu" class="view">
+        <h2 class="section-h">Why Setu</h2>
+        <p class="section-sub">Most teams either keep doing this by hand, or bolt a chatbot onto their documents. Neither actually reasons over the supply chain.</p>
+
+        <table class="compare-table">
+          <tr><th>Capability</th><th>Spreadsheets &amp; Email</th><th>Generic AI Chatbot</th><th class="hl">Setu</th></tr>
+          <tr><td>Live graph reasoning over the whole chain</td><td class="no">✕</td><td class="no">✕</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Predicts cascading delay impact</td><td class="no">✕</td><td class="partial">~</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Learns vendor reliability from real chats</td><td class="no">✕</td><td class="partial">~</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Catches counterfeit material</td><td class="no">✕</td><td class="no">✕</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Understands 12 Indian languages &amp; Hinglish</td><td class="no">✕</td><td class="partial">~</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Takes autonomous action (sends, calls, negotiates)</td><td class="no">✕</td><td class="no">✕</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Answers are explainable, not guessed</td><td class="partial">~</td><td class="partial">~</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Works across many sites from day one</td><td class="partial">~</td><td class="no">✕</td><td class="yes hl-col">✓</td></tr>
+          <tr><td>Live supplier discovery with real pricing</td><td class="no">✕</td><td class="no">✕</td><td class="yes hl-col">✓</td></tr>
+        </table>
+
+        <div class="unique-grid">
+          <div class="unique-card"><i class="fa-solid fa-diagram-project"></i><div><b>One shared graph, not four tools</b><p>A delay one engine predicts instantly updates the trust score another computes — no manual syncing between systems.</p></div></div>
+          <div class="unique-card"><i class="fa-solid fa-language"></i><div><b>Understands real vendor language</b><p>Fine-tuned on 12 major Indian languages plus Hinglish/Tanglish job-site communication, where generic English-first models quietly fail.</p></div></div>
+          <div class="unique-card"><i class="fa-solid fa-magnifying-glass-chart"></i><div><b>Explains every answer</b><p>Risk scores and trust scores trace back to the graph traversal or message that produced them — nothing is a black-box guess.</p></div></div>
+          <div class="unique-card"><i class="fa-solid fa-shield-halved"></i><div><b>Catches fraud before it's poured</b><p>Counterfeit material is flagged at the gate, not discovered in an inspection years after it's structural.</p></div></div>
+        </div>
+      </section>
+
+      <!-- ============ SCALABILITY ============ -->
+      <section id="sec-scale" class="view">
+        <h2 class="section-h">Built to Scale</h2>
+        <p class="section-sub">Every additional project doesn't just add a dashboard — it makes the Risk and Trust Engines measurably smarter.</p>
+
+        <div class="card">
+          <div class="card-title">Prediction accuracy as the graph grows</div>
+          <div class="growth-chart">
+            <div class="growth-col"><div class="growth-bar" style="height:65%;"><span>65%</span></div><div class="growth-label">1 project</div><div class="growth-sub">cold start</div></div>
+            <div class="growth-col"><div class="growth-bar" style="height:79%;"><span>79%</span></div><div class="growth-label">10 projects</div><div class="growth-sub">shared vendor history</div></div>
+            <div class="growth-col"><div class="growth-bar" style="height:88%;"><span>88%</span></div><div class="growth-label">50 projects</div><div class="growth-sub">portfolio-wide graph</div></div>
+            <div class="growth-col"><div class="growth-bar" style="height:94%; background:linear-gradient(180deg, var(--amber), var(--amber-dim));"><span style="color:var(--amber);">94%</span></div><div class="growth-label">Cross-company network</div><div class="growth-sub">federated benchmarking</div></div>
+          </div>
+          <p style="font-size:11px; color:var(--faint); margin-top:6px;">Illustrative targets for Risk Engine delay-prediction accuracy as shared graph history accumulates.</p>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-title">How it scales</div>
+          <div class="scale-step active">
+            <div class="scale-num">01</div>
+            <div><b>Single site</b><p style="color:var(--dim); font-size:12.5px; margin-top:4px;">One project proves the graph model — vendors, SKUs, and shipments for a single tower.</p></div>
+          </div>
+          <div class="scale-step">
+            <div class="scale-num">02</div>
+            <div><b>Multi-site portfolio</b><p style="color:var(--dim); font-size:12.5px; margin-top:4px;">The Control Tower gives one procurement head visibility across every active site, and vendor trust scores carry over between projects instead of resetting.</p></div>
+          </div>
+          <div class="scale-step">
+            <div class="scale-num">03</div>
+            <div><b>Cross-company network</b><p style="color:var(--dim); font-size:12.5px; margin-top:4px;">Federated, privacy-preserving benchmarking lets multiple firms improve their vendor risk scoring together, without any one company exposing its raw commercial data to a competitor.</p></div>
+          </div>
+        </div>
+
+        <div class="footnote">Infrastructure note: the graph and agent layer scale close to linearly with site count — the marginal cost of onboarding one more project is small next to the cost of another procurement hire, which is the real comparison that matters at scale.</div>
+      </section>
+
+      <!-- ============ SUPPLIER: DASHBOARD ============ -->
+      <section id="sec-sup-home" class="view">
+        <h2 class="section-h">My Dashboard</h2>
+        <p class="section-sub">Everything a supplier needs to see about their standing with every contractor on Setu.</p>
+
+        <div class="grid grid-4" style="margin-bottom:18px;">
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div><div class="stat-num">8</div><div class="stat-label">Active purchase orders</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-truck-ramp-box"></i></div><div class="stat-num">91%</div><div class="stat-label">Your on-time delivery rate</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-star"></i></div><div class="stat-num amber">84</div><div class="stat-label">Trust score / 100</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-bell"></i></div><div class="stat-num red">2</div><div class="stat-label">Actions needing attention</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Recent activity</div>
+          <ul class="feed">
+            <li><span class="feed-dot" style="background:var(--teal);"></span><div>New PO received — 300 bags OPC Cement for Riverfront, Pune<span class="feed-time">12m ago</span></div></li>
+            <li><span class="feed-dot" style="background:var(--teal);"></span><div><b>Verify Engine</b> approved your delivery #4819 — 98% match confidence<span class="feed-time">1h ago</span></div></li>
+            <li><span class="feed-dot" style="background:var(--amber);"></span><div>Contractor asked for an updated ETA on Shipment #4821<span class="feed-time">3h ago</span></div></li>
+          </ul>
+          <button class="ai-btn" style="margin-top:14px;" onclick="aiSuggest(this, 'A supplier has 8 active POs, a 91% on-time rate, and 2 pending actions: an unanswered ETA request on Shipment #4821, and a new PO for 300 bags of cement that needs confirming. What should they prioritize right now today?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Suggest</button>
+          <div class="ai-result" style="display:none;"></div>
+        </div>
+      </section>
+
+      <!-- ============ SUPPLIER: MY ORDERS ============ -->
+      <section id="sec-sup-orders" class="view">
+        <h2 class="section-h">My Orders</h2>
+        <p class="section-sub">Every purchase order assigned to you, across every contractor and project on Setu.</p>
+
+        <table>
+          <tr><th>PO #</th><th>Project</th><th>Material</th><th>Quantity</th><th>Due</th><th>Status</th></tr>
+          <tr><td>#4821</td><td>Tower B, Chennai</td><td>TMT Steel Beams</td><td>12.4 t</td><td>14 Jul</td><td><span class="badge amber">In transit — delayed</span></td></tr>
+          <tr><td>#4830</td><td>Riverfront, Pune</td><td>OPC Cement</td><td>300 bags</td><td>18 Jul</td><td><span class="badge green">Confirmed</span></td></tr>
+          <tr><td>#4802</td><td>Greenfield, Nagpur</td><td>TMT Rebar</td><td>11.8 t</td><td>09 Jul</td><td><span class="badge green">Delivered</span></td></tr>
+          <tr><td>#4841</td><td>Tower B, Chennai</td><td>Structural Steel</td><td>6.0 t</td><td>22 Jul</td><td><span class="badge red">Awaiting your confirmation</span></td></tr>
+        </table>
+      </section>
+
+      <!-- ============ SUPPLIER: UPDATE FABRICATION ============ -->
+      <section id="sec-sup-fab" class="view">
+        <h2 class="section-h">Update Fabrication</h2>
+        <p class="section-sub">Move your shipment forward a stage — the contractor's Risk Engine recalculates the moment you do.</p>
+
+        <div class="card">
+          <div class="card-title">Shipment #4821 — TMT Steel Beams, Tower B</div>
+          <div class="stage-track">
+            <div class="stg done">Design approved</div>
+            <div class="stg done">Raw materials in</div>
+            <div class="stg done">Production started</div>
+            <div class="stg current">Quality inspection</div>
+            <div class="stg">Packaging</div>
+            <div class="stg">Ready for dispatch</div>
+          </div>
+          <div class="fab-progress"><div style="width:80%;"></div></div>
+          <p style="font-size:11px; color:var(--dim); margin-bottom:16px;">80% complete · updated by you 2 hours ago</p>
+          <button class="ai-btn" onclick="aiSuggest(this, 'Draft a short, natural status-update message a steel supplier could send to their contractor: fabrication is 80% complete, quality inspection just finished, packaging and dispatch remain, expected ready-for-dispatch in 2 days.')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI: Draft update message</button>
+          <div class="ai-result" style="display:none;"></div>
+        </div>
+      </section>
+
+      <!-- ============ SUPPLIER: SUBMIT DELIVERY PROOF ============ -->
+      <section id="sec-sup-verify" class="view">
+        <h2 class="section-h">Submit Delivery Proof</h2>
+        <p class="section-sub">Upload what you're sending — the Verify Engine checks it against the PO and certificate patterns before the contractor ever has to.</p>
+
+        <div class="grid grid-2-even">
+          <div class="upload-box"><i class="fa-solid fa-camera"></i>Drop a delivery photo here<br>or click to upload</div>
+          <div class="upload-box"><i class="fa-solid fa-file-shield"></i>Drop the material certificate here<br>or click to upload</div>
+        </div>
+        <button class="btn-confirm" style="margin-top:16px;">Submit for verification →</button>
+      </section>
+
+      <!-- ============ SUPPLIER: MY TRUST SCORE ============ -->
+      <section id="sec-sup-trust" class="view">
+        <h2 class="section-h">My Trust Score</h2>
+        <p class="section-sub">This is the same score contractors see on you across every project — and exactly what's moving it.</p>
+
+        <div class="card">
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <span class="stat-num amber" style="font-size:46px;">84</span><span style="color:var(--dim); font-size:13px;">/ 100 · steady</span>
+          </div>
+          <div class="trend-bars">
+            <div style="height:70%;"></div><div style="height:75%;"></div><div style="height:80%;"></div>
+            <div style="height:72%;background:var(--amber);"></div><div style="height:85%;"></div><div style="height:84%;"></div>
+          </div>
+          <div class="card-title" style="margin-top:10px;">What's moving your score</div>
+          <div class="prov-row"><span>On-time delivery rate</span><b style="color:var(--teal);">+ strong</b></div>
+          <div class="prov-row"><span>Message clarity ("Friday tak" style vague ETAs)</span><b style="color:var(--amber);">− minor drag</b></div>
+          <div class="prov-row"><span>Certificate consistency</span><b style="color:var(--teal);">+ strong</b></div>
+          <button class="ai-btn" style="margin-top:14px;" onclick="aiSuggest(this, 'A supplier has a trust score of 84/100, mostly strong, with the main drag being occasional vague delivery commitments like Friday tak ho jayega instead of a specific date or time. What is the single most useful thing they could change this week to improve their score?')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI: How do I improve this?</button>
+          <div class="ai-result" style="display:none;"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="ai-chat-launcher" id="chat-launcher" onclick="toggleChat()"><i class="fa-solid fa-comment-dots"></i></div>
+<div class="ai-chat-panel" id="chat-panel">
+  <div class="chat-panel-header">
+    <div><b style="font-size:13px;">Setu Assistant</b><div style="font-size:10px; color:var(--dim); margin-top:2px;">Ask about any shipment, vendor, or risk</div></div>
+    <i class="fa-solid fa-xmark" onclick="toggleChat()" style="cursor:pointer; color:var(--dim);"></i>
+  </div>
+  <div class="chat-panel-body" id="chat-panel-body">
+    <div class="chat-bubble in">Hi! Ask me things like "Is Ramesh Traders reliable?" or "What's happening at Tower B?" — I'll answer using the live graph context.</div>
+  </div>
+  <div class="chat-panel-input">
+    <input type="text" id="chat-input" placeholder="Ask the assistant..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+    <button onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<script>
+  const navItems = document.querySelectorAll('.nav-item');
+  const views = document.querySelectorAll('.view');
+  const titles = {
+    'sec-tower': ['Control Tower', 'Portfolio-wide view across every active site'],
+    'sec-risk': ['Risk Engine', 'Cascading delay forecasting'],
+    'sec-verify': ['Verify Engine', 'Delivery & fraud verification'],
+    'sec-trust': ['Trust Engine', 'Vendor reliability scoring'],
+    'sec-action': ['Action Engine', 'Autonomous outreach & graph Q&A'],
+    'sec-whatif': ['What-If Simulator', 'Scenario-based optimization'],
+    'sec-drawing': ['Drawing Intelligence', 'Beyond OCR on complex drawings'],
+    'sec-vernacular': ['Vernacular Intelligence', 'Fine-tuned for real vendor communication'],
+    'sec-voice': ['Voice Agent', 'Autonomous vendor phone calls'],
+    'sec-discovery': ['Supplier Discovery', 'Live map of every supplier around a site'],
+    'sec-logistics': ['Logistics Tracking', 'GPS and fabrication status, live on the graph'],
+    'sec-provenance': ['Provenance Ledger', 'A tamper-evident record for every delivery'],
+    'sec-analytics': ['Analytics & Budget', 'Portfolio KPIs and budget variance'],
+    'sec-sustain': ['Sustainability', 'Sourcing and emissions, ranked alongside price'],
+    'sec-realtime': ['Real-Time Operations', 'Live, always-on monitoring across every site'],
+    'sec-whysetu': ['Why Setu', 'How this compares to what teams use today'],
+    'sec-scale': ['Built to Scale', 'From one site to a cross-company network'],
+    'sec-sup-home': ['My Dashboard', 'Your standing across every contractor on Setu'],
+    'sec-sup-orders': ['My Orders', 'Every PO assigned to you, across every project'],
+    'sec-sup-fab': ['Update Fabrication', 'Move your shipment forward a stage'],
+    'sec-sup-verify': ['Submit Delivery Proof', 'Photo and certificate, checked before dispatch'],
+    'sec-sup-trust': ['My Trust Score', 'What contractors see, and what moves it'],
+  };
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      navItems.forEach(n => n.classList.remove('active'));
+      views.forEach(v => v.classList.remove('active'));
+      item.classList.add('active');
+      const target = item.dataset.target;
+      document.getElementById(target).classList.add('active');
+      document.getElementById('topbar-title').textContent = titles[target][0];
+      document.getElementById('topbar-sub').textContent = titles[target][1];
+    });
+  });
+
+  const roleDefaults = { contractor: 'sec-tower', supplier: 'sec-sup-home' };
+  function setRole(role){
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.toggle('active', b.dataset.role === role));
+    document.getElementById('nav-contractor').style.display = role === 'contractor' ? 'block' : 'none';
+    document.getElementById('nav-supplier').style.display = role === 'supplier' ? 'block' : 'none';
+    const defaultTarget = roleDefaults[role];
+    navItems.forEach(n => n.classList.remove('active'));
+    views.forEach(v => v.classList.remove('active'));
+    const defaultNavItem = document.querySelector('.nav-item[data-target="' + defaultTarget + '"]');
+    if (defaultNavItem) defaultNavItem.classList.add('active');
+    document.getElementById(defaultTarget).classList.add('active');
+    document.getElementById('topbar-title').textContent = titles[defaultTarget][0];
+    document.getElementById('topbar-sub').textContent = titles[defaultTarget][1];
+  }
+
+  // Live feed ticker
+  const feedEvents = [
+    ['var(--teal)', '<b>Trust Engine</b> refreshed score for Kochi Steelworks → 91/100', 'Metro Depot'],
+    ['var(--amber)', '<b>Risk Engine</b> flagged monsoon signal on Riverfront transit route', 'Riverfront'],
+    ['var(--teal)', '<b>Action Engine</b> parsed vendor reply — ETA confirmed Monday', 'Tower B'],
+    ['var(--red)', '<b>Verify Engine</b> rejected certificate on Delivery #4830', 'Greenfield'],
+  ];
+  let feedIdx = 0;
+  setInterval(() => {
+    const feed = document.getElementById('live-feed');
+    const [color, text, loc] = feedEvents[feedIdx % feedEvents.length];
+    feedIdx++;
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="feed-dot" style="background:${color};"></span><div>${text}<span class="feed-time">${loc} · just now</span></div>`;
+    feed.prepend(li);
+    if (feed.children.length > 6) feed.removeChild(feed.lastChild);
+  }, 5000);
+
+  // What-if simulator logic
+  function updateScenario(){
+    const val = document.getElementById('scenario-select').value;
+    const data = {
+      0: ['78% · HIGH', '+4 days', '₹0'],
+      1: ['22% · LOW', '+0 days', '₹1,84,000 (air freight premium)'],
+      2: ['31% · LOW', '+1 day', '₹46,000 (vendor switch + remobilization)'],
+    };
+    const [risk, sched, cost] = data[val];
+    document.getElementById('sim-risk').textContent = risk;
+    document.getElementById('sim-sched').textContent = sched;
+    document.getElementById('sim-cost').textContent = cost;
+  }
+
+  // Live clock
+  function tickClock(){
+    const el = document.getElementById('live-clock');
+    if (el) el.textContent = new Date().toLocaleTimeString('en-IN', { hour12:false });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // Agent task status cycling — sells the "always running" story
+  const taskCycles = {
+    task1: ['drafting outreach to Ramesh Traders', 'sending via WhatsApp Business API', 'awaiting vendor reply'],
+    task2: ['re-scoring vendor after new message', 'weighting message against 14-message history', 'score updated: 62 → 59'],
+    task3: ['running air-freight scenario for Shipment #4821', 'recomputing cascading impact', 'simulation complete'],
+  };
+  Object.keys(taskCycles).forEach((id, i) => {
+    let step = 0;
+    setInterval(() => {
+      step = (step + 1) % taskCycles[id].length;
+      const el = document.getElementById(id);
+      if (el) el.textContent = taskCycles[id][step];
+    }, 3600 + i * 500);
+  });
+
+  // Fake QR pattern (deterministic so it looks stable, not random noise each load)
+  (function renderQr(){
+    const qr = document.getElementById('qr-mock');
+    if (!qr) return;
+    const seed = [1,1,1,0,1,0,1,1, 1,0,0,0,0,0,0,1, 1,0,1,1,1,0,1,1, 0,0,1,0,0,0,1,0,
+                  1,0,1,0,1,1,0,1, 0,0,1,0,0,0,0,1, 1,1,1,0,1,1,1,1, 1,0,0,1,0,1,0,0];
+    seed.forEach(v => {
+      const cell = document.createElement('div');
+      cell.style.background = v ? '#0D141C' : '#ffffff';
+      qr.appendChild(cell);
+    });
+  })();
+
+  // ---- Real AI integration ----
+  async function callClaude(userPrompt, systemPrompt){
+    try{
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }],
+        }),
+      });
+      const data = await resp.json();
+      const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+      return text || "(No response)";
+    } catch (e){
+      console.error("Setu AI error:", e);
+      return "__ERROR__";
+    }
+  }
+
+  async function aiSuggest(btn, context){
+    const resultEl = btn.nextElementSibling;
+    const lang = document.getElementById('lang-select').value;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...';
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<span class="thinking-dots"><span></span><span></span><span></span></span>';
+
+    const sys = "You are an AI assistant embedded inside 'Setu', a construction supply-chain intelligence platform. " +
+      "Given a short situation, give ONE specific, actionable suggestion a procurement manager or supplier could act on right now. " +
+      "2-3 sentences, concrete, no preamble, no markdown, no bullet points. " +
+      "Respond naturally in " + lang + " — if it's not English, write in that language's native script, the way a native speaker would actually write it, not a stiff literal translation.";
+
+    const text = await callClaude(context, sys);
+    btn.disabled = false;
+    btn.innerHTML = original;
+    if (text === "__ERROR__"){
+      resultEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--amber);"></i> Couldn\'t reach the AI service — check your connection and try again.';
+    } else {
+      resultEl.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="color:var(--teal); margin-right:7px;"></i>' + text;
+    }
+  }
+
+  // ---- Floating chat assistant ----
+  function toggleChat(){
+    document.getElementById('chat-panel').classList.toggle('open');
+  }
+
+  async function sendChatMessage(){
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    const body = document.getElementById('chat-panel-body');
+    const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    body.insertAdjacentHTML('beforeend', '<div class="chat-bubble out">' + esc(msg) + '</div>');
+    input.value = '';
+    body.scrollTop = body.scrollHeight;
+
+    const thinkingId = 'think-' + Date.now();
+    body.insertAdjacentHTML('beforeend', '<div class="chat-bubble in" id="' + thinkingId + '"><span class="thinking-dots"><span></span><span></span><span></span></span></div>');
+    body.scrollTop = body.scrollHeight;
+
+    const lang = document.getElementById('lang-select').value;
+    const sys = "You are the Setu Assistant, embedded in a live demo of a construction supply-chain platform. " +
+      "Context you know about: Shipment #4821 (delayed TMT steel beams for Tower B, Chennai, HIGH risk 78/100, monsoon-linked transit delay), " +
+      "vendor Shree Balaji Steel Traders (trust score 62/100, declining, due to vague delivery commitments), " +
+      "Delivery #4822 (flagged by Verify Engine for a possible counterfeit certificate, 41% confidence), " +
+      "and five sites: Tower B (Chennai, HIGH risk), Riverfront (Pune, MEDIUM), Metro Depot (Hyderabad, LOW), Greenfield (Nagpur, MEDIUM), Harbor Link (Kochi, LOW). " +
+      "Answer the user's question helpfully and specifically using this context where relevant. 2-4 sentences, conversational, no markdown. " +
+      "Respond in " + lang + " — native script if not English.";
+
+    const reply = await callClaude(msg, sys);
+    const thinkingEl = document.getElementById(thinkingId);
+    if (thinkingEl) thinkingEl.remove();
+    const finalReply = reply === "__ERROR__"
+      ? "Sorry, I couldn't reach the AI service just now — check your connection and try again."
+      : reply;
+    body.insertAdjacentHTML('beforeend', '<div class="chat-bubble in">' + esc(finalReply) + '</div>');
+    body.scrollTop = body.scrollHeight;
+  }
+</script>
+</body>
+</html>
