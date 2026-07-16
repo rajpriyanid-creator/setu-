@@ -6,16 +6,27 @@
 
 ---
 
-## Contents of this submission
+## Try the demo
+
+Download [`Setu-demo.html`](./Setu-demo.html) and open it in any modern browser (Chrome, Edge, Safari, Firefox). No build step, no server, no install.
+
+> **Tip:** since this is a single static HTML file, you can also turn on **GitHub Pages** for this repo (Settings → Pages → Deploy from branch → `main`) to get a shareable link, instead of asking judges to download and open a file locally.
+
+---
+
+## What's in this repository
 
 | File | What it is |
 |---|---|
-| `Setu_Platform_Deck.pptx` | Full platform pitch deck (14 slides) — problem, architecture, every feature area, comparison, roadmap |
-| `Setu_Demo_Page.html` | Interactive, clickable product demo — open it in a browser, no install needed |
-| `Setu_Stage1_Proposal.docx` | Written Stage 1 proposal (problem, solution, technical approach, data model) |
-| `Setu_Stage1_Deck.pptx` | Original 10-slide Stage 1 submission deck |
-
+| `Setu-demo.html` | Interactive, clickable product demo — every screen, both role views, and the live AI features described below |
 | `README.md` | This file |
+
+The full platform pitch deck and Stage 1 proposal are part of the hackathon submission but aren't tracked in this repo.
+
+> *If you're submitting those separately (Drive/portal link), consider adding them here so anyone landing on the repo can find the complete picture:*
+> - `Setu_Platform_Deck.pptx` — full platform pitch deck (problem, architecture, feature areas, comparison, roadmap)
+> - `Setu_Stage1_Proposal.docx` — written Stage 1 proposal (problem, solution, technical approach, data model)
+> - `Setu_Stage1_Deck.pptx` — original Stage 1 submission deck
 
 ---
 
@@ -60,25 +71,28 @@ Setu is split into a **Contractor / Procurement** view and a **Supplier / Vendor
 
 ---
 
-## Running the demo (`Setu_Demo_Page.html`)
+## Using the demo
 
-1. Open the file in any modern browser (Chrome, Edge, Safari, Firefox). No build step, no server required.
-2. **Role bar** (top): switch between **Contractor** and **Supplier** — each gets its own sidebar and set of screens.
-3. **Language switcher** (top right): choose from 12 major Indian languages — English, Hindi, Bengali, Telugu, Marathi, Tamil, Gujarati, Urdu, Kannada, Odia, Malayalam, or Punjabi — this controls the language of every AI response on the page.
-4. **AI Suggest buttons**: found on the Control Tower, Risk/Verify/Trust engines, the What-If Simulator, Supplier Discovery, and both supplier-side AI screens. Click one to get a real, live suggestion for that specific situation.
-5. **Setu Assistant** (floating button, bottom-right): a chat assistant that can answer free-form questions about the shipments, vendors, and risk scores shown in the demo.
+1. **Role bar** (top): switch between **Contractor** and **Supplier** — each gets its own sidebar and set of screens.
+2. **Language switcher** (top right): choose from 12 major Indian languages — this controls the language of every AI response on the page.
+3. **AI Suggest buttons**: found on the Control Tower, Risk/Verify/Trust engines, the What-If Simulator, Supplier Discovery, and both supplier-side AI screens.
+4. **Setu Assistant** (floating button, bottom-right): a chat assistant that answers free-form questions about the shipments, vendors, and risk scores shown in the demo.
 
-### Important: the AI features are real, not scripted
-The AI Suggest buttons and the chat assistant make live calls to Claude directly from the page (no API key required — this is handled automatically in Claude-generated artifacts). This means:
-- Responses take a few seconds, because they're actually being generated, not pre-written.
-- An internet connection is required for these specific features; everything else on the page works offline.
-- Responses will vary slightly between clicks, the way a real assistant's would.
+### About the live AI features — read before demoing
+
+The AI Suggest buttons and the chat assistant call the Anthropic API (`api.anthropic.com/v1/messages`) directly from the page, with no API key embedded in the file. This is intentional: it's designed to run inside a **Claude-hosted artifact**, where Anthropic supplies the credentials for that session automatically — no key management needed.
+
+**What this means in practice:**
+- **Viewed inside a Claude.ai artifact / shared Claude link:** the AI Suggest buttons and the chat assistant work live — real, un-scripted responses, in whatever language is selected.
+- **Opened as a local file, exactly as described in "Try the demo" above:** the rest of the UI (navigation, role switching, both portals, all static data) works perfectly, but the AI Suggest and chat buttons will show *"Couldn't reach the AI service"* — the request has no authorization and will be rejected.
+
+**If you're demoing this live to judges,** use the Claude-hosted artifact link (not a downloaded local file) so the AI features actually respond. If you want the AI features to also work for anyone who downloads and opens the raw HTML, you'd need a small backend that holds your API key server-side and proxies these requests — never embed a real API key in client-side JavaScript, since anyone viewing source could extract and misuse it.
 
 ---
 
 ## Data shown in the demo
 
-All vendor names, scores, shipment IDs, and figures throughout the demo and deck are **illustrative example data**, built to make the product's behavior concrete — they are not from a real project or a real vendor. The Scalability slide's accuracy figures (65% → 94%) are **modeled targets**, not measured results; say "projected" rather than "achieved" when presenting them.
+All vendor names, scores, shipment IDs, and figures throughout the demo are **illustrative example data**, built to make the product's behavior concrete — they are not from a real project or a real vendor. The Scalability screen's accuracy figures (65% → 94%) are **modeled targets**, not measured results — say "projected" rather than "achieved" when presenting them.
 
 ---
 
@@ -90,10 +104,12 @@ All vendor names, scores, shipment IDs, and figures throughout the demo and deck
 - **Trust & Action Engines:** LLM-based parsing, drafting, and text-to-Cypher query generation, grounded in the project's own graph rather than general knowledge.
 - **Demo front end:** static HTML/CSS/JS, Font Awesome 6 icons, Big Shoulders Display + IBM Plex Sans/Mono typefaces.
 
+---
+
 ## Team
 
 **HUNTERZ**
-- Rajpriyan S - CEG, Guindy
+- Rajpriyan S — CEG, Guindy
 
 Contact: rajpriyanid@gmail.com
 
