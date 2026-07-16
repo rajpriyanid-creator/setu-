@@ -18,7 +18,7 @@
 
 Download [`Setu-demo.html`](./Setu-demo.html) and open it in any modern browser (Chrome, Edge, Safari, Firefox). No build step, no server, no install.
 
-> **Tip:** since this is a single static HTML file, you can also turn on **GitHub Pages** for this repo (Settings → Pages → Deploy from branch → `main`) to get a shareable link, instead of asking judges to download and open a file locally.
+
 
 ---
 
