@@ -6,6 +6,14 @@
 
 ---
 
+## Links
+
+| | |
+|---|---|
+| 🎥 **Demo video** | [youtu.be/GPjfADO_CgA](https://youtu.be/GPjfADO_CgA) |
+| 📊 **Pitch deck** | [Google Slides](https://docs.google.com/presentation/d/1UZln-6WqCKxdaNWDlVGYb-T88fRW2J18/edit?usp=drive_link&ouid=115713157852702237388&rtpof=true&sd=true) |
+| 🖥️ **Live demo** | Download [`Setu-demo.html`](./Setu-demo.html) below, or open it via a Claude-hosted artifact link for full AI functionality (see [note below](#about-the-live-ai-features--read-before-demoing)) |
+
 ## Try the demo
 
 Download [`Setu-demo.html`](./Setu-demo.html) and open it in any modern browser (Chrome, Edge, Safari, Firefox). No build step, no server, no install.
@@ -21,12 +29,7 @@ Download [`Setu-demo.html`](./Setu-demo.html) and open it in any modern browser 
 | `Setu-demo.html` | Interactive, clickable product demo — every screen, both role views, and the live AI features described below |
 | `README.md` | This file |
 
-The full platform pitch deck and Stage 1 proposal are part of the hackathon submission but aren't tracked in this repo.
-
-> *If you're submitting those separately (Drive/portal link), consider adding them here so anyone landing on the repo can find the complete picture:*
-> - `Setu_Platform_Deck.pptx` — full platform pitch deck (problem, architecture, feature areas, comparison, roadmap)
-> - `Setu_Stage1_Proposal.docx` — written Stage 1 proposal (problem, solution, technical approach, data model)
-> - `Setu_Stage1_Deck.pptx` — original Stage 1 submission deck
+The full platform pitch deck ([linked above](#links)) and demo video are part of the hackathon submission and live outside this repo.
 
 ---
 
